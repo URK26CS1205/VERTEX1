@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VERTEX - Threat Mesh</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #0b1020;
+            color: white;
+            min-height: 100vh;
+        }
+
+        header {
+            padding: 20px 40px;
+            border-bottom: 1px solid #26304a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 4px;
+        }
+
+        .subtitle {
+            color: #8993aa;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .status {
+            background: #12251c;
+            color: #42e88b;
+            padding: 10px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+
+        main {
+            padding: 30px 40px;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+        }
+
+        .panel {
+            background: #11182b;
+            border: 1px solid #26304a;
+            border-radius: 15px;
+            padding: 25px;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            color: #8993aa;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 25px;
+        }
+
+        /* NETWORK */
+
+        .network {
+            min-height: 470px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .internet {
+            background: #18213a;
+            border: 1px solid #34415f;
+            padding: 12px 25px;
+            border-radius: 25px;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .node {
+            width: 180px;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid #34415f;
+            background: #151e34;
+            transition: 0.5s;
+            position: relative;
+            z-index: 2;
+        }
+
+        .node-name {
+            font-size: 17px;
+            font-weight: bold;
+        }
+
+        .node-status {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #42e88b;
+        }
+
+        .connection {
+            width: 4px;
+            height: 45px;
+            background: #34415f;
+            transition: 0.5s;
+        }
+
+        /* STATES */
+
+        .safe {
+            border-color: #42e88b;
+            box-shadow: 0 0 15px rgba(66, 232, 139, 0.25);
+        }
+
+        .warning {
+            border-color: #f5c542;
+            box-shadow: 0 0 20px rgba(245, 197, 66, 0.35);
+        }
+
+        .high {
+            border-color: #ff8a3d;
+            box-shadow: 0 0 25px rgba(255, 138, 61, 0.4);
+        }
+
+        .critical {
+            border-color: #ff4057;
+            box-shadow: 0 0 30px rgba(255, 64, 87, 0.5);
+            animation: pulse 1s infinite;
+        }
+
+        .critical .node-status {
+            color: #ff4057;
+        }
+
+        .warning .node-status {
+            color: #f5c542;
+        }
+
+        .high .node-status {
+            color: #ff8a3d;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 10px rgba(255, 64, 87, 0.2);
+            }
+
+            50% {
+                box-shadow: 0 0 35px rgba(255, 64, 87, 0.7);
+            }
+
+            100% {
+                box-shadow: 0 0 10px rgba(255, 64, 87, 0.2);
+            }
+        }
+
+        .connection.active {
+            background: #ff4057;
+            box-shadow: 0 0 12px #ff4057;
+        }
+
+        /* CONTROLS */
+
+        .buttons {
+            display: grid;
+            gap: 12px;
+        }
+
+        button {
+            background: #18213a;
+            border: 1px solid #34415f;
+            color: white;
+            padding: 14px;
+            border-radius: 9px;
+            cursor: pointer;
+            text-align: left;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #24304d;
+            transform: translateY(-2px);
+        }
+
+        .attack {
+            border-left: 4px solid #ff4057;
+        }
+
+        .isolate {
+            border-left: 4px solid #42e88b;
+        }
+
+        .reset {
+            border-left: 4px solid #8993aa;
+        }
+
+        /* EVENT LOG */
+
+        .log {
+            margin-top: 25px;
+            max-height: 230px;
+            overflow-y: auto;
+        }
+
+        .event {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #0c1324;
+            border-radius: 7px;
+            border-left: 3px solid #34415f;
+            font-size: 12px;
+        }
+
+        .event.alert {
+            border-left-color: #ff4057;
+        }
+
+        .event.gossip {
+            border-left-color: #8c6cff;
+        }
+
+        .time {
+            color: #68738c;
+            margin-right: 8px;
+        }
+
+        /* METRICS */
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .metric {
+            background: #0c1324;
+            padding: 18px;
+            border-radius: 10px;
+        }
+
+        .metric-number {
+            font-size: 25px;
+            font-weight: bold;
+        }
+
+        .metric-label {
+            color: #68738c;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+
+        .isolation {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            background: #0c1324;
+            text-align: center;
+            color: #68738c;
+        }
+
+        .isolated {
+            color: #42e88b;
+            border: 1px solid #42e88b;
+        }
+
+        @media(max-width: 900px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+
+    <div>
+        <div class="logo">VERTEX</div>
+        <div class="subtitle">
+            Physical-Digital Threat Mesh • Digital Twin Prototype
+        </div>
+    </div>
+
+    <div class="status" id="systemStatus">
+        ● SYSTEM NORMAL
+    </div>
+
+</header>
+
+
+<main>
+
+    <div class="dashboard">
+
+        <!-- NETWORK -->
+
+        <div class="panel">
+
+            <div class="panel-title">
+                Live Threat Topology
+            </div>
+
+            <div class="network">
+
+                <div class="internet">
+                    🌐 INTERNET
+                </div>
+
+                <div class="connection" id="connection1"></div>
+
+                <div class="node safe" id="web">
+                    <div class="node-name">WEB SERVER</div>
+                    <div class="node-status" id="webStatus">
+                        ● SAFE
+                    </div>
+                </div>
+
+                <div class="connection" id="connection2"></div>
+
+                <div class="node safe" id="app">
+                    <div class="node-name">APPLICATION</div>
+                    <div class="node-status" id="appStatus">
+                        ● SAFE
+                    </div>
+                </div>
+
+                <div class="connection" id="connection3"></div>
+
+                <div class="node safe" id="database">
+                    <div class="node-name">DATABASE</div>
+                    <div class="node-status" id="dbStatus">
+                        ● SAFE
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="metrics">
+
+                <div class="metric">
+                    <div class="metric-number" id="threatScore">
+                        0
+                    </div>
+                    <div class="metric-label">
+                        THREAT SCORE
+                    </div>
+                </div>
+
+                <div class="metric">
+                    <div class="metric-number" id="events">
+                        0
+                    </div>
+                    <div class="metric-label">
+                        EVENTS
+                    </div>
+                </div>
+
+                <div class="metric">
+                    <div class="metric-number" id="nodes">
+                        0
+                    </div>
+                    <div class="metric-label">
+                        AFFECTED NODES
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="isolation" id="isolation">
+                NETWORK SEGMENTATION: NORMAL
+            </div>
+
+        </div>
+
+
+        <!-- CONTROL PANEL -->
+
+        <div class="panel">
+
+            <div class="panel-title">
+                Attack Simulation
+            </div>
+
+            <div class="buttons">
+
+                <button class="attack" onclick="bruteForce()">
+                    ⚠ BRUTE FORCE
+                    <br>
+                    <small>Repeated authentication failures</small>
+                </button>
+
+                <button class="attack" onclick="newTool()">
+                    ⚠ NEW TOOL
+                    <br>
+                    <small>Unknown tool detected</small>
+                </button>
+
+                <button class="attack" onclick="privilegeEscalation()">
+                    ⚠ PRIVILEGE ESCALATION
+                    <br>
+                    <small>Suspicious privilege increase</small>
+                </button>
+
+                <button class="attack" onclick="largeEgress()">
+                    ⚠ LARGE EGRESS
+                    <br>
+                    <small>Abnormal outbound data transfer</small>
+                </button>
+
+                <button class="isolate" onclick="isolateDatabase()">
+                    🛡 ISOLATE DATABASE
+                    <br>
+                    <small>Segment compromised node</small>
+                </button>
+
+                <button class="reset" onclick="resetSystem()">
+                    ↻ RESET SYSTEM
+                    <br>
+                    <small>Return to normal state</small>
+                </button>
+
+            </div>
+
+            <div class="panel-title" style="margin-top:30px;">
+                Event Stream
+            </div>
+
+            <div class="log" id="log">
+
+                <div class="event">
+                    <span class="time">SYSTEM</span>
+                    VERTEX mesh initialized.
+                </div>
+
+                <div class="event">
+                    <span class="time">SYSTEM</span>
+                    All nodes operating normally.
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</main>
+
+
+<script>
+
+let threatScore = 0;
+let eventCount = 0;
+
+
+/* GET CURRENT TIME */
+
+function getTime() {
+
+    let now = new Date();
+
+    return now.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+    });
+
+}
+
+
+/* ADD EVENT */
+
+function addEvent(message, type = "") {
+
+    let log = document.getElementById("log");
+
+    let event = document.createElement("div");
+
+    event.className = "event " + type;
+
+    event.innerHTML =
+        `<span class="time">${getTime()}</span>${message}`;
+
+    log.prepend(event);
+
+    eventCount++;
+
+    document.getElementById("events").innerText =
+        eventCount;
+
+}
+
+
+/* UPDATE NODE */
+
+function updateNode(id, state, text) {
+
+    let node = document.getElementById(id);
+
+    node.classList.remove(
+        "safe",
+        "warning",
+        "high",
+        "critical"
+    );
+
+    node.classList.add(state);
+
+    let status;
+
+    if (id === "database") {
+        status = document.getElementById("dbStatus");
+    } else {
+        status = document.getElementById(id + "Status");
+    }
+
+    status.innerText = "● " + text;
+}
+
+
+/* UPDATE METRICS */
+
+function updateMetrics() {
+
+    document.getElementById("threatScore")
+        .innerText = threatScore;
+
+    let affected = 0;
+
+    ["web", "app", "database"].forEach(id => {
+
+        let node = document.getElementById(id);
+
+        if (!node.classList.contains("safe")) {
+            affected++;
+        }
+
+    });
+
+    document.getElementById("nodes")
+        .innerText = affected;
+
+}
+
+
+/* SYSTEM STATUS */
+
+function updateSystemStatus(text) {
+
+    document.getElementById("systemStatus")
+        .innerText = "● " + text;
+
+}
+
+
+/* BRUTE FORCE */
+
+function bruteForce() {
+
+    threatScore += 15;
+
+    updateNode(
+        "web",
+        "warning",
+        "SUSPICIOUS"
+    );
+
+    addEvent(
+        "BRUTE_FORCE detected at WEB_NODE",
+        "alert"
+    );
+
+    updateSystemStatus("THREAT DETECTED");
+
+    updateMetrics();
+
+}
+
+
+/* NEW TOOL */
+
+function newTool() {
+
+    threatScore += 20;
+
+    updateNode(
+        "web",
+        "high",
+        "HIGH RISK"
+    );
+
+    addEvent(
+        "NEW_TOOL detected at WEB_NODE",
+        "alert"
+    );
+
+    setTimeout(() => {
+
+        document.getElementById(
+            "connection2"
+        ).classList.add("active");
+
+        addEvent(
+            "GOSSIP → APP_NODE: anomaly propagated",
+            "gossip"
+        );
+
+        updateNode(
+            "app",
+            "warning",
+            "ELEVATED"
+        );
+
+        updateMetrics();
+
+    }, 700);
+
+    updateSystemStatus("THREAT PROPAGATING");
+
+    updateMetrics();
+
+}
+
+
+/* PRIVILEGE ESCALATION */
+
+function privilegeEscalation() {
+
+    threatScore += 25;
+
+    updateNode(
+        "app",
+        "high",
+        "HIGH RISK"
+    );
+
+    addEvent(
+        "PRIVILEGE_ESCALATION detected at APP_NODE",
+        "alert"
+    );
+
+    setTimeout(() => {
+
+        document.getElementById(
+            "connection3"
+        ).classList.add("active");
+
+        addEvent(
+            "GOSSIP → DATABASE_NODE: threat propagated",
+            "gossip"
+        );
+
+        updateNode(
+            "database",
+            "warning",
+            "ELEVATED"
+        );
+
+        updateMetrics();
+
+    }, 700);
+
+    updateSystemStatus("THREAT PROPAGATING");
+
+    updateMetrics();
+
+}
+
+
+/* LARGE EGRESS */
+
+function largeEgress() {
+
+    threatScore += 40;
+
+    updateNode(
+        "database",
+        "critical",
+        "CRITICAL"
+    );
+
+    addEvent(
+        "LARGE_EGRESS detected at DATABASE_NODE",
+        "alert"
+    );
+
+    addEvent(
+        "DATA EXFILTRATION suspected",
+        "alert"
+    );
+
+    updateSystemStatus("CRITICAL THREAT");
+
+    updateMetrics();
+
+}
+
+
+/* ISOLATE DATABASE */
+
+function isolateDatabase() {
+
+    let database =
+        document.getElementById("database");
+
+    database.style.opacity = "0.45";
+
+    document.getElementById(
+        "connection3"
+    ).style.background = "#42e88b";
+
+    document.getElementById(
+        "connection3"
+    ).classList.remove("active");
+
+    let isolation =
+        document.getElementById("isolation");
+
+    isolation.innerText =
+        "✓ DATABASE SEGMENT ISOLATED";
+
+    isolation.classList.add("isolated");
+
+    addEvent(
+        "ZERO-TRUST ACTION: DATABASE NODE ISOLATED",
+        "gossip"
+    );
+
+    updateSystemStatus("THREAT CONTAINED");
+
+}
+
+
+/* RESET */
+
+function resetSystem() {
+
+    threatScore = 0;
+    eventCount = 0;
+
+    ["web", "app", "database"].forEach(id => {
+
+        updateNode(
+            id,
+            "safe",
+            "SAFE"
+        );
+
+        document.getElementById(id).style.opacity = "1";
+
+    });
+
+    ["connection1", "connection2", "connection3"]
+        .forEach(id => {
+
+            document.getElementById(id)
+                .classList.remove("active");
+
+            document.getElementById(id)
+                .style.background = "";
+
+        });
+
+    document.getElementById("threatScore")
+        .innerText = "0";
+
+    document.getElementById("events")
+        .innerText = "0";
+
+    document.getElementById("nodes")
+        .innerText = "0";
+
+    document.getElementById("isolation")
+        .innerText =
+        "NETWORK SEGMENTATION: NORMAL";
+
+    document.getElementById("isolation")
+        .classList.remove("isolated");
+
+    document.getElementById("systemStatus")
+        .innerText =
+        "● SYSTEM NORMAL";
+
+    document.getElementById("log").innerHTML = "";
+
+    addEvent(
+        "VERTEX mesh reset and initialized."
+    );
+
+}
+
+</script>
+
+</body>
+</html>
